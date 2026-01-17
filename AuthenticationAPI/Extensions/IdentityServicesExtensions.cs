@@ -8,7 +8,7 @@ namespace AuthenticationAPI.Extensions
     {
         public static IServiceCollection AddIdentityServices(this IServiceCollection services, IConfiguration config)
         {
-            services.AddIdentity<User, IdentityRole>(options =>
+            services.AddIdentity<User, IdentityRole>(options => 
             {
                 IConfigurationSection identitySettings = config.GetSection("IdentitySettings");
 
@@ -30,7 +30,9 @@ namespace AuthenticationAPI.Extensions
                 // If RequireUniqueEmail value is not specified in the configuration then it is defaulted to False minutes by ASP.NET Core Identity
                 if (identitySettings.GetSection("RequireUniqueEmail").Value != null) { options.User.RequireUniqueEmail = Boolean.Parse(identitySettings.GetSection("RequireUniqueEmail").Value!); }
 
-            }).AddEntityFrameworkStores<ApplicationDbContext>();
+            })
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
 
             return services;
         }

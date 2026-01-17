@@ -15,6 +15,7 @@ namespace AuthenticationAPI.Extensions
             // Application Services
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IUserRolesService, UserRolesService>();
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             return services;
         }

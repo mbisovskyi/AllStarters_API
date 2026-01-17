@@ -8,6 +8,7 @@ namespace AuthenticationAPI.Controllers
     public class AccountController : BaseApiController
     {
         private readonly IAccountService accountService;
+        private AccountServiceResponse? response;
 
         public AccountController(IAccountService accountService)
         {
@@ -17,9 +18,15 @@ namespace AuthenticationAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAccountAsync(RegisterAccountDto requestDto)
         {
-            AccountServiceResponse response = await accountService.RegisterAccountAsync(requestDto);
+            response = await accountService.RegisterAccountAsync(requestDto);
             return response.GetResult();
         }
 
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginAccountAsync(LoginAccountDto requestDto)
+        {
+            response = await accountService.LoginAccountAsync(requestDto);
+            return response.GetResult();
+        }
     }
 }
