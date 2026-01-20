@@ -14,6 +14,7 @@ namespace AuthenticationAPI.Services
         private readonly RoleManager<IdentityRole> roleManager;
         private readonly IJwtTokenService tokenService;
         private AccountServiceResponse response = new AccountServiceResponse();
+        private IdentityResult result = new IdentityResult();
 
         public AccountService(UserManager<User> userManager, IUserRolesService userRoleService, RoleManager<IdentityRole> roleManager, IJwtTokenService tokenService)
         {
@@ -25,9 +26,6 @@ namespace AuthenticationAPI.Services
 
         public async Task<AccountServiceResponse> RegisterAccountAsync(RegisterAccountDto requestDto)
         {
-            // Initialize default BadRequest response result object
-            response.SetBadRequestResult($"{requestDto.UserRole} Account was not created!");
-
             User user = new User
             {
                 UserName = requestDto.UserName,
@@ -38,7 +36,7 @@ namespace AuthenticationAPI.Services
             try
             {
                 // Create Account
-                IdentityResult result = await userManager.CreateAsync(user, requestDto.Password);
+                result = await userManager.CreateAsync(user, requestDto.Password);
 
                 // Add requested User Role if account was successfully created
                 if (result.Succeeded)
@@ -47,17 +45,20 @@ namespace AuthenticationAPI.Services
                 // Generate successful response that account was generated with requested role
                 if (result.Succeeded)
                 {
-                    response.SetOkResult(new
+                    response.SetOk(new
                     {
                         Message = $"{requestDto.UserRole} Account was successfully created.",
                         CreatedDt = user.CreatedDate
                     });
                 }
-                else
+
+                if (!result.Succeeded)
                 {
                     // Make sure that user does not exist if successful response is not generated
                     if (userManager.GetUserNameAsync(user) != null)
                         await userManager.DeleteAsync(user);
+
+                    response.SetBadRequestErrors(result.Errors);
                 }
 
                 return response;
@@ -68,21 +69,32 @@ namespace AuthenticationAPI.Services
                 if (userManager.GetUserNameAsync(user) != null)
                     await userManager.DeleteAsync(user);
 
+                response.SetBadRequestErrors("Internal Error.");
                 return response;
             }
         }
 
         public async Task<AccountServiceResponse> LoginAccountAsync(LoginAccountDto requestDto)
         {
-            response.SetBadRequestResult("Unauthorized.");
-
             User? user = await userManager.FindByEmailAsync(requestDto.Email);
             if (user != null && await userManager.CheckPasswordAsync(user, requestDto.Password))
             {
                 IList<Claim> userClaims = await GetAccountClaimsAsync(user);
                 string token = tokenService.CreateToken(userClaims);
-                await userManager.SetAuthenticationTokenAsync(user, "JwtProvider", Constants.TokenTypes.Login, token);
-                response.SetOkResult(token);
+                result = await userManager.SetAuthenticationTokenAsync(user, "JwtProvider", Constants.TokenTypes.Login, token);
+
+                if (result.Succeeded)
+                {
+                    response.SetOk(new { AuthorizationToken = token });
+                }
+                else
+                {
+                    response.SetBadRequestErrors(result.Errors);
+                }
+            }
+            else
+            {
+                response.SetBadRequestErrors("Unauthorized.");
             }
 
             return response;

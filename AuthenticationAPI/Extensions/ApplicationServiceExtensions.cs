@@ -17,6 +17,15 @@ namespace AuthenticationAPI.Extensions
             services.AddScoped<IUserRolesService, UserRolesService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
 
+            // CORS Policies
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.WithOrigins(config["WebApplicationUrl"] ?? string.Empty).AllowAnyHeader().AllowAnyMethod();
+                });
+            });
+
             return services;
         }
     }

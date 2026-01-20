@@ -21,6 +21,10 @@ app.UseHttpsRedirection();
 
 // Authentication & Authorization Middleware.
 app.UseAuthentication();
+
+// CORS
+app.UseCors();
+
 app.UseAuthorization();
 
 app.MapControllers();
