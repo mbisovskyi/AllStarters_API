@@ -8,6 +8,7 @@ namespace AuthenticationAPI.DTO
         public string UserName { get; set; } = string.Empty;
         [Required]
         [DataType(DataType.EmailAddress)]
+        [EmailAddress]
         public string Email { get; set; } = string.Empty;
         [Required]
         [DataType(DataType.Password)]
@@ -20,6 +21,7 @@ namespace AuthenticationAPI.DTO
     {
         [Required]
         [DataType(DataType.EmailAddress)]
+        [EmailAddress]
         public string Email { get; set; } = string.Empty;
         [Required]
         [DataType(DataType.Password)]
