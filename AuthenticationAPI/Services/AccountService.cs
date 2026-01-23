@@ -13,7 +13,6 @@ namespace AuthenticationAPI.Services
         private readonly IUserRolesService userRoleService;
         private readonly RoleManager<IdentityRole> roleManager;
         private readonly IJwtTokenService tokenService;
-        private AccountServiceResponse response = new AccountServiceResponse();
         private IdentityResult result = new IdentityResult();
 
         public AccountService(UserManager<User> userManager, IUserRolesService userRoleService, RoleManager<IdentityRole> roleManager, IJwtTokenService tokenService)
@@ -24,8 +23,10 @@ namespace AuthenticationAPI.Services
             this.tokenService = tokenService;
         }
 
-        public async Task<AccountServiceResponse> RegisterAccountAsync(RegisterAccountDto requestDto)
+        public async Task<RegisterAccountResponse> RegisterAccountAsync(RegisterAccountDto requestDto)
         {
+            RegisterAccountResponse response = new RegisterAccountResponse();
+
             User user = new User
             {
                 UserName = requestDto.UserName,
@@ -45,20 +46,18 @@ namespace AuthenticationAPI.Services
                 // Generate successful response that account was generated with requested role
                 if (result.Succeeded)
                 {
-                    response.SetOk(new
-                    {
-                        Message = $"{requestDto.UserRole} Account was successfully created.",
-                        CreatedDt = user.CreatedDate
-                    });
+                    response.Success = true;
+                    response.CreatedDt = DateTime.Now;
                 }
 
                 if (!result.Succeeded)
                 {
                     // Make sure that user does not exist if successful response is not generated
                     if (userManager.GetUserNameAsync(user) != null)
+                    {
                         await userManager.DeleteAsync(user);
-
-                    response.SetBadRequestErrors(result.Errors);
+                        response.SetErrors(result.Errors);
+                    }
                 }
 
                 return response;
@@ -67,15 +66,19 @@ namespace AuthenticationAPI.Services
             {
                 // Make sure that User is not created in case of any exception
                 if (userManager.GetUserNameAsync(user) != null)
+                {
                     await userManager.DeleteAsync(user);
+                    response.SetErrors("Internal Error.");
+                }
 
-                response.SetBadRequestErrors("Internal Error.");
                 return response;
             }
         }
 
-        public async Task<AccountServiceResponse> LoginAccountAsync(LoginAccountDto requestDto)
+        public async Task<LoginAccountResponse> LoginAccountAsync(LoginAccountDto requestDto)
         {
+            LoginAccountResponse response = new LoginAccountResponse();
+
             User? user = await userManager.FindByEmailAsync(requestDto.Email);
             if (user != null && await userManager.CheckPasswordAsync(user, requestDto.Password))
             {
@@ -85,16 +88,21 @@ namespace AuthenticationAPI.Services
 
                 if (result.Succeeded)
                 {
-                    response.SetOk(new { AuthorizationToken = token });
+                    IList<string> userRoles = await userManager.GetRolesAsync(user);
+
+                    response.Success = true;
+                    response.UserName = user.UserName!;
+                    response.UserRoles = userRoles.ToList();
+                    response.AccessToken = token;
                 }
                 else
                 {
-                    response.SetBadRequestErrors(result.Errors);
+                   response.SetErrors(result.Errors);
                 }
             }
             else
             {
-                response.SetBadRequestErrors("Unauthorized.");
+                response.SetErrors("Unauthorized.");
             }
 
             return response;

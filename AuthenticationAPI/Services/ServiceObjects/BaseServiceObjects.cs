@@ -1,59 +1,20 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using System.Dynamic;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AuthenticationAPI.Services.ServiceObjects
 {
-    public abstract class BaseServiceResponse : ControllerBase // Inherits ControllerBase to be able to return IActionResult objects
+    public abstract class BaseServiceResponse
     {
-        private IActionResult Result { get; set; } = new EmptyResult();
+        public bool Success { get; set; } = false;
+        public List<string> Errors { get; set; } = new List<string>();
 
-        public IActionResult GetResult()
+        public void SetErrors(string errorMessage)
         {
-            return Result;
+            Errors.Add(errorMessage);
         }
 
-        public void SetOk()
+        public void SetErrors(IEnumerable<IdentityError> errors)
         {
-            Result = Ok();
-        }
-
-        public void SetOk(object data)
-        {
-            Result = Ok(new { Data = data });
-        }
-
-        public void SetOk(string message)
-        {
-            Result = Ok(new { Data = new { Message = message }});
-        }
-
-        public void SetBadRequestErrors(IDictionary<string, List<string>> errors)
-        {
-            Result = BadRequest(new { Errors = errors });
-        }
-
-        public void SetBadRequestErrors(object errors)
-        {
-                Result = BadRequest(new { Errors =  errors});
-        }
-
-        public void SetBadRequestErrors(IEnumerable<IdentityError> errors)
-        {
-            List<string> parsedErrors = parseIdentityErrors(errors);
-            Result = BadRequest(new { Errors = parsedErrors });
-        }
-
-        public void SetBadRequestErrors(string message)
-        {
-            Result = BadRequest(new { Errors = new { Status = message }});
-        }
-
-        // Class Helpers
-        private List<string> parseIdentityErrors(IEnumerable<IdentityError> errors)
-        {
-            return errors.Select(error => error.Description).ToList();
+            Errors = errors.Select(error => error.Description).ToList();
         }
     }
 }
