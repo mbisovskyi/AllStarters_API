@@ -1,5 +1,6 @@
-﻿using AuthenticationAPI.DTO;
+﻿
 using AuthenticationAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,17 +16,18 @@ namespace AuthenticationAPI.Controllers
             this.config = config;
             this.userManager = userManager;
         }
+
+        [Authorize(Policy = "Admin")]
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok();
+            var token = Request.Headers["Authorization"].ToString();
+            return Ok(new {RequestToken = token});
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostAsync(RegisterAccountDto requestDto)
+        public async Task<IActionResult> PostAsync([FromBody] object test)
         {
-            User user = new User { UserName = requestDto.UserName, Email = requestDto.Email, CreatedDate = DateTime.Now };
-            var result = await userManager.CreateAsync(user, requestDto.Password);
             return Ok();
         }
     }

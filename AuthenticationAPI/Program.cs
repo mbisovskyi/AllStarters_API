@@ -19,12 +19,11 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 app.UseHttpsRedirection();
 
-// Authentication & Authorization Middleware.
-app.UseAuthentication();
-
 // CORS
 app.UseCors();
 
+// Authentication & Authorization Middleware.
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

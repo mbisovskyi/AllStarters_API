@@ -8,6 +8,8 @@ namespace AuthenticationAPI.Services
     {
         private byte[] secretKey;
         private int expiresInMinutes;
+        private string tokenIssuer;
+        private string tokenAudience;
 
         public JwtTokenService(IConfiguration config)
         {
@@ -27,6 +29,8 @@ namespace AuthenticationAPI.Services
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
+                Issuer = tokenIssuer,
+                Audience = tokenAudience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256Signature),
                 Claims = claimsDict,
                 Expires = DateTime.UtcNow.AddMinutes(expiresInMinutes),
@@ -40,6 +44,8 @@ namespace AuthenticationAPI.Services
         private void GetTokenConfiguration(IConfiguration config)
         {
             secretKey = System.Text.Encoding.UTF8.GetBytes(config["AuthenticationJwtSettings:SecretKey"] ?? String.Empty);
+            tokenIssuer = config["AuthenticationJwtSettings:Issuer"] ?? throw new InvalidOperationException("Jwt Issuer is not configured.");
+            tokenAudience = config["AuthenticationJwtSettings:Audience"] ?? throw new InvalidOperationException("Jwt Audience is not configured.");
             if (!Int32.TryParse(config[""], out expiresInMinutes))
             {
                 expiresInMinutes = 5;

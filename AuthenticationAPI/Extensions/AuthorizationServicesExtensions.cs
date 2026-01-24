@@ -7,7 +7,7 @@
             services.AddAuthorization(options =>
             {
                 // AS AN EXAMPLE FOR NOW! Make sure you need this authorization policy configured!
-                options.AddPolicy("AdminOnly", policy => policy.RequireClaim("Admin", "true"));
+                options.AddPolicy("Admin", policy => policy.RequireClaim("Admin", "True"));
             });
 
             return services;
