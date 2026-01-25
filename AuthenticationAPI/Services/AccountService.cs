@@ -91,8 +91,6 @@ namespace AuthenticationAPI.Services
                     IList<string> userRoles = await userManager.GetRolesAsync(user);
 
                     response.Success = true;
-                    response.UserName = user.UserName!;
-                    response.UserRoles = userRoles.ToList();
                     response.AccessToken = token;
                 }
                 else
@@ -108,10 +106,37 @@ namespace AuthenticationAPI.Services
             return response;
         }
 
+        public async Task<AuthenticateAccountResponse> AuthenticateAccountAsync(ClaimsPrincipal principal)
+        {
+            AuthenticateAccountResponse response = new AuthenticateAccountResponse();
+
+            try
+            {
+                User? user = await userManager.GetUserAsync(principal);
+                if (user != null)
+                {
+                    IList<string> userRoles = await userManager.GetRolesAsync(user);
+
+                    response.Success = true;
+                    response.UserName = user.UserName!;
+                    response.UserRoles = userRoles.ToList();
+                }
+            }
+            catch (Exception)
+            {
+                response.SetErrors("Internal Error.");
+            }
+
+            return response;
+        }
+
         private async Task<IList<Claim>> GetAccountClaimsAsync(User user)
         {
             IList<Claim> userClaims = await userManager.GetClaimsAsync(user);
             IList<string> userRoles = await userManager.GetRolesAsync(user);
+
+            // This is important Claim. This allows to use UserManager.GetUserAsync(ClaimsPrincipal) to find a user.
+            userClaims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
 
             foreach (string roleName in userRoles)
             {

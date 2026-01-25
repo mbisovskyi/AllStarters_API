@@ -9,8 +9,12 @@ namespace AuthenticationAPI.Services.ServiceObjects.AccountServiceObjects
 
     public class LoginAccountResponse : BaseServiceResponse
     {
+        public string AccessToken { get; set; } = string.Empty;
+    }
+
+    public class AuthenticateAccountResponse : BaseServiceResponse
+    {
         public string UserName { get; set; } = string.Empty;
         public List<string> UserRoles { get; set; } = new List<string>();
-        public string AccessToken { get; set; } = string.Empty;
     }
 }

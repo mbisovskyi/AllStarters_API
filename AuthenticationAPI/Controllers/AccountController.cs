@@ -1,6 +1,7 @@
 ﻿using AuthenticationAPI.DTO;
 using AuthenticationAPI.Services;
 using AuthenticationAPI.Services.ServiceObjects.AccountServiceObjects;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuthenticationAPI.Controllers
@@ -17,7 +18,7 @@ namespace AuthenticationAPI.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<RegisterAccountResponse>> RegisterAccountAsync(RegisterAccountDto requestDto)
         {
-            RegisterAccountResponse response =  await accountService.RegisterAccountAsync(requestDto);
+            RegisterAccountResponse response = await accountService.RegisterAccountAsync(requestDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -35,6 +36,18 @@ namespace AuthenticationAPI.Controllers
                 return BadRequest(response);
             }
 
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpGet("authenticate")]
+        public async Task<ActionResult<AuthenticateAccountResponse>> AuthenticateAccountAsync()
+        {
+            AuthenticateAccountResponse response = await accountService.AuthenticateAccountAsync(User);
+            if (!response.Success)
+            {
+                return Unauthorized(response);
+            }
             return Ok(response);
         }
     }

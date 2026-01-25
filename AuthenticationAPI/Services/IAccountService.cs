@@ -1,6 +1,7 @@
 ﻿using AuthenticationAPI.DTO;
 using AuthenticationAPI.Services.ServiceObjects;
 using AuthenticationAPI.Services.ServiceObjects.AccountServiceObjects;
+using System.Security.Claims;
 
 namespace AuthenticationAPI.Services
 {
@@ -8,5 +9,6 @@ namespace AuthenticationAPI.Services
     {
         Task<RegisterAccountResponse> RegisterAccountAsync(RegisterAccountDto requestDto);
         Task<LoginAccountResponse> LoginAccountAsync(LoginAccountDto requestDto);
+        Task<AuthenticateAccountResponse> AuthenticateAccountAsync(ClaimsPrincipal principal);
     }
 }
