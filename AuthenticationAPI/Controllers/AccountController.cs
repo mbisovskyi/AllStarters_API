@@ -50,5 +50,18 @@ namespace AuthenticationAPI.Controllers
             }
             return Ok(response);
         }
+
+        [Authorize]
+        [HttpGet("verify-access")]
+        public async Task<ActionResult> VerifyAccessAccountAsync()
+        {
+            bool response = await accountService.VerifyAccessAsync(User);
+            if (response) // true - user not found or locked out
+            {
+                return Unauthorized();
+            }
+
+            return Ok();
+        }
     }
 }
