@@ -46,7 +46,7 @@ namespace AuthenticationAPI.Services
             secretKey = System.Text.Encoding.UTF8.GetBytes(config["AuthenticationJwtSettings:SecretKey"] ?? String.Empty);
             tokenIssuer = config["AuthenticationJwtSettings:Issuer"] ?? throw new InvalidOperationException("Jwt Issuer is not configured.");
             tokenAudience = config["AuthenticationJwtSettings:Audience"] ?? throw new InvalidOperationException("Jwt Audience is not configured.");
-            if (!Int32.TryParse(config[""], out expiresInMinutes))
+            if (!Int32.TryParse(config["AuthenticationJwtSettings:TokenExpirationMinutes"], out expiresInMinutes))
             {
                 expiresInMinutes = 5;
             }
