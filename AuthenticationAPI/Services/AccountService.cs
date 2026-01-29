@@ -106,9 +106,9 @@ namespace AuthenticationAPI.Services
             return response;
         }
 
-        public async Task<AuthenticateAccountResponse> AuthenticateAccountAsync(ClaimsPrincipal principal)
+        public async Task<GetMeAccountResponse> GetMeAccountAsync(ClaimsPrincipal principal)
         {
-            AuthenticateAccountResponse response = new AuthenticateAccountResponse();
+            GetMeAccountResponse response = new GetMeAccountResponse();
 
             try
             {
@@ -128,17 +128,6 @@ namespace AuthenticationAPI.Services
             }
 
             return response;
-        }
-
-        public async Task<bool> VerifyAccessAsync(ClaimsPrincipal principal)
-        {
-            User? user = await userManager.GetUserAsync(principal);
-            if (user != null)
-            {
-                return await userManager.IsLockedOutAsync(user); 
-            }
-
-            return true; // return true as user not found - means no access
         }
 
         private async Task<IList<Claim>> GetAccountClaimsAsync(User user)
