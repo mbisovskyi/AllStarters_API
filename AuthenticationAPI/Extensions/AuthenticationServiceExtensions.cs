@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using AuthenticationAPI.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AuthenticationAPI.Extensions
@@ -31,6 +33,30 @@ namespace AuthenticationAPI.Extensions
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(config["AuthenticationJwtSettings:SecretKey"] ?? string.Empty)),
                     ClockSkew = TimeSpan.Zero
+                };
+
+                // Validates custom token events.
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = async context =>
+                    {
+                        UserManager<User> userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
+                        User? user = await userManager.GetUserAsync(context.Principal!);
+
+                        // Check if account exists
+                        if (user == null)
+                        {
+                            context.Fail("Account does not exist.");
+                            return;
+                        }
+
+                        // Check lockout
+                        if (await userManager.IsLockedOutAsync(user))
+                        {
+                            context.Fail("Account is locked out.");
+                            return;
+                        }
+                    }
                 };
             });
 
