@@ -40,28 +40,15 @@ namespace AuthenticationAPI.Controllers
         }
 
         [Authorize]
-        [HttpGet("authenticate")]
-        public async Task<ActionResult<AuthenticateAccountResponse>> AuthenticateAccountAsync()
+        [HttpGet("me")]
+        public async Task<ActionResult<GetMeAccountResponse>> GetMeAccountAsync()
         {
-            AuthenticateAccountResponse response = await accountService.AuthenticateAccountAsync(User);
+            GetMeAccountResponse response = await accountService.GetMeAccountAsync(User);
             if (!response.Success)
             {
                 return Unauthorized(response);
             }
             return Ok(response);
-        }
-
-        [Authorize]
-        [HttpGet("verify-access")]
-        public async Task<ActionResult> VerifyAccessAccountAsync()
-        {
-            bool response = await accountService.VerifyAccessAsync(User);
-            if (response) // true - user not found or locked out
-            {
-                return Unauthorized();
-            }
-
-            return Ok();
         }
     }
 }
