@@ -22,7 +22,7 @@ namespace AuthenticationAPI.Extensions
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins(config["WebApplicationUrl"] ?? string.Empty).AllowAnyHeader().AllowAnyMethod();
+                    policy.WithOrigins(config["WebApplicationUrl"] ?? string.Empty).AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("Token-Error");
                 });
             });
 
