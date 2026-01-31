@@ -38,6 +38,29 @@ namespace AuthenticationAPI.Extensions
                 // Validates custom token events.
                 options.Events = new JwtBearerEvents
                 {
+                    OnAuthenticationFailed = context =>
+                    {
+                        context.Response.StatusCode = 401;
+
+                        if (context.Exception is SecurityTokenExpiredException)
+                        {
+                            context.Response.Headers.Append("Token-Error", "expired");
+                        }
+                        else
+                        {
+                            context.Response.Headers.Append("Token-Error", "invalid");
+                        }
+
+                        return Task.CompletedTask;
+                    },
+
+                    OnForbidden = context =>
+                    {
+                        context.Response.StatusCode = 403;
+                        context.Response.Headers.Append("Token-Error", "forbidden");
+                        return Task.CompletedTask;
+                    },
+
                     OnTokenValidated = async context =>
                     {
                         UserManager<User> userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
