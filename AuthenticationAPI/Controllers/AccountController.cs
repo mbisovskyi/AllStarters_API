@@ -50,5 +50,12 @@ namespace AuthenticationAPI.Controllers
             }
             return Ok(response);
         }
+
+        [Authorize]
+        [HttpGet("verify-access")]
+        public async Task<ActionResult> VerifyAccessAccountAsync()
+        {
+            return await Task.Run(Ok);
+        }
     }
 }
