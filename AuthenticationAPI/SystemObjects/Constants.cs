@@ -17,6 +17,7 @@
         public static class TokenTypes
         {
             public const string Login = "LoginToken";
+            public const string Refresh = "RefreshToken";
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using AuthenticationAPI.DTO;
 using AuthenticationAPI.Models;
 using AuthenticationAPI.Services.ServiceObjects.AccountServiceObjects;
+using AuthenticationAPI.SystemObjects;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
@@ -81,12 +82,14 @@ namespace AuthenticationAPI.Services
             User? user = await userManager.FindByEmailAsync(requestDto.Email);
             if (user != null && await userManager.CheckPasswordAsync(user, requestDto.Password))
             {
-                string token = await tokenService.CreateTokenAsync(user, requestDto.RememberMe);
+                string accessToken = await tokenService.CreateTokenAsync(user, requestDto.RememberMe, Constants.TokenTypes.Login);
+                string refreshToken = await tokenService.CreateTokenAsync(user, false, Constants.TokenTypes.Refresh);
 
-                if (token != null)
+                if (accessToken != null && refreshToken != null)
                 {
                     response.Success = true;
-                    response.AccessToken = token;
+                    response.AccessToken = accessToken;
+                    response.RefreshToken = refreshToken;
                 }
             }
 
