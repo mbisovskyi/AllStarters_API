@@ -9,6 +9,11 @@
             public const string UserRole = "User";
         }
 
+        public static class TokenProviders
+        {
+            public const string Jwt = "JwtProvider";
+        }
+
         public static class TokenTypes
         {
             public const string Login = "LoginToken";
