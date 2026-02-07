@@ -1,9 +1,9 @@
-﻿using System.Security.Claims;
+﻿using AuthenticationAPI.Models;
 
 namespace AuthenticationAPI.Services
 {
     public interface IJwtTokenService
     {
-        string CreateToken(IList<Claim> claims);
+        Task<string> CreateTokenAsync(User user, bool lifetimeExtended);
     }
 }

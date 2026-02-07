@@ -1,7 +1,6 @@
 ﻿using AuthenticationAPI.DTO;
 using AuthenticationAPI.Models;
 using AuthenticationAPI.Services.ServiceObjects.AccountServiceObjects;
-using AuthenticationAPI.SystemObjects;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
@@ -82,26 +81,17 @@ namespace AuthenticationAPI.Services
             User? user = await userManager.FindByEmailAsync(requestDto.Email);
             if (user != null && await userManager.CheckPasswordAsync(user, requestDto.Password))
             {
-                IList<Claim> userClaims = await GetAccountClaimsAsync(user);
-                string token = tokenService.CreateToken(userClaims);
-                result = await userManager.SetAuthenticationTokenAsync(user, "JwtProvider", Constants.TokenTypes.Login, token);
+                string token = await tokenService.CreateTokenAsync(user, requestDto.RememberMe);
 
-                if (result.Succeeded)
+                if (token != null)
                 {
-                    IList<string> userRoles = await userManager.GetRolesAsync(user);
-
                     response.Success = true;
                     response.AccessToken = token;
                 }
-                else
-                {
-                   response.SetErrors(result.Errors);
-                }
             }
-            else
-            {
+
+            if (!response.Success)
                 response.SetErrors("Unauthorized.");
-            }
 
             return response;
         }
@@ -128,29 +118,6 @@ namespace AuthenticationAPI.Services
             }
 
             return response;
-        }
-
-        private async Task<IList<Claim>> GetAccountClaimsAsync(User user)
-        {
-            IList<Claim> userClaims = await userManager.GetClaimsAsync(user);
-            IList<string> userRoles = await userManager.GetRolesAsync(user);
-
-            // This is important Claim. This allows to use UserManager.GetUserAsync(ClaimsPrincipal) to find a user.
-            userClaims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
-
-            foreach (string roleName in userRoles)
-            {
-                IdentityRole? role = await roleManager.FindByNameAsync(roleName);
-                if (role != null)
-                {
-                    foreach (Claim claim in await roleManager.GetClaimsAsync(role))
-                    {
-                        userClaims.Add(claim);
-                    }
-                }
-            }
-
-            return userClaims;
         }
     }
 }

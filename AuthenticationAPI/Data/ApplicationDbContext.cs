@@ -1,4 +1,6 @@
-﻿using AuthenticationAPI.Models;
+﻿using AuthenticationAPI.Data.TableModels;
+using AuthenticationAPI.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +22,12 @@ namespace AuthenticationAPI.Data
                     entityType.SetTableName(tableName.Replace("AspNet", string.Empty)); // Removes "AspNet" prefix from all Identity table names.
                 }
             }
+
+            builder.Entity<UserTokenTableRow>(build => 
+            {
+                build.ToTable("UserTokens"); // Maps UserTokenTableRow to the "UserTokens" table.
+                build.Property(t => t.LifetimeExtended).HasDefaultValue(false).IsRequired(); // Sets default value for LifetimeExtended to false.
+            });
         }
     }
 }
