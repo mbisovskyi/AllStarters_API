@@ -10,6 +10,7 @@ namespace AuthenticationAPI.Services.ServiceObjects.AccountServiceObjects
     public class LoginAccountResponse : BaseServiceResponse
     {
         public string AccessToken { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
     }
 
     public class GetMeAccountResponse : BaseServiceResponse

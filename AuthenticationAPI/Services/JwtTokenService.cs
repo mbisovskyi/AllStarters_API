@@ -18,6 +18,7 @@ namespace AuthenticationAPI.Services
         private byte[] secretKey;
         private int expiresInMinutes;
         private int expiresInMinutesExtended;
+        private int refreshTokenExpiresInMinutes;
         private string tokenIssuer;
         private string tokenAudience;
 
@@ -29,37 +30,52 @@ namespace AuthenticationAPI.Services
             this.context = context;
         }
 
-        public async Task<string> CreateTokenAsync(User user, bool lifetimeExtended)
+        public async Task<string> CreateTokenAsync(User user, bool lifetimeExtended, string tokenType)
         {
+            SecurityTokenDescriptor tokenDescriptor = GetTokenDescriptor();
+
             IList<Claim> userClaims = await GetUserClaimsAsync(user);
-            var claimsDict = new Dictionary<string, object>();
             if (userClaims != null && userClaims.Count > 0)
             {
                 foreach (var claim in userClaims)
                 {
-                    claimsDict.Add(claim.Type, claim.Value);
+                    tokenDescriptor.Claims.Add(claim.Type, claim.Value);
                 }
             }
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+            switch (tokenType)
             {
-                Issuer = tokenIssuer,
-                Audience = tokenAudience,
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256Signature),
-                Claims = claimsDict,
-                Expires = DateTime.UtcNow.AddMinutes(lifetimeExtended ? expiresInMinutesExtended : expiresInMinutes),
-                NotBefore = DateTime.UtcNow
-            };
+                case Constants.TokenTypes.Login:
+                    tokenDescriptor.Expires = DateTime.UtcNow.AddMinutes(lifetimeExtended ? expiresInMinutesExtended : expiresInMinutes);
+                    break;
+                case Constants.TokenTypes.Refresh:
+                    tokenDescriptor.Expires = DateTime.UtcNow.AddMinutes(refreshTokenExpiresInMinutes);
+                    break;
+                default:
+                    throw new InvalidOperationException("Invalid token type.");
+            }
 
             var tokenHandler = new JsonWebTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
-            bool result = await UpdateUserTokenAsync(user, Constants.TokenProviders.Jwt, Constants.TokenTypes.Login, token, lifetimeExtended);
+            bool success = await UpdateUserTokenAsync(user, Constants.TokenProviders.Jwt, tokenType, token, lifetimeExtended);
 
-            if (result)
+            if (success)
                 return token;
 
             return null;
+        }
+
+        private SecurityTokenDescriptor GetTokenDescriptor()
+        {
+            return new SecurityTokenDescriptor
+            {
+                Issuer = tokenIssuer,
+                Audience = tokenAudience,
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256Signature),
+                NotBefore = DateTime.UtcNow,
+                Claims = new Dictionary<string, object>()
+            };
         }
 
         private async Task<IList<Claim>> GetUserClaimsAsync(User user)
@@ -92,31 +108,45 @@ namespace AuthenticationAPI.Services
             tokenAudience = config["AuthenticationJwtSettings:Audience"] ?? throw new InvalidOperationException("Jwt Audience is not configured.");
             if (!Int32.TryParse(config["AuthenticationJwtSettings:TokenExpirationMinutes"], out expiresInMinutes))
             {
-                expiresInMinutes = 5;
+                expiresInMinutes = 5; // Default value for normal token expiration is 5 minutes.
             }
             if (!Int32.TryParse(config["AuthenticationJwtSettings:TokenExtendedExpirationMinutes"], out expiresInMinutesExtended))
             {
-                expiresInMinutesExtended = 5;
+                expiresInMinutesExtended = expiresInMinutes; // Default value for extended token expiration is the same as normal token expiration.
             }
+            if (!Int32.TryParse(config["AuthenticationJwtSettings:RefreshTokenExpirationMinutes"], out refreshTokenExpiresInMinutes))
+            {
+                expiresInMinutesExtended = expiresInMinutes * 2; // Default value for refresh token expiration is 2 times the normal token expiration.
+            }
+            
         }
 
-        private async Task<bool> UpdateUserTokenAsync(User user, string loginProvider, string tokenName, string token, bool lifetimeExtended)
+        private async Task<bool> UpdateUserTokenAsync(User user, string loginProvider, string tokenType, string token, bool lifetimeExtended)
         {
-            IdentityResult result = await userManager.SetAuthenticationTokenAsync(user, loginProvider, tokenName, token);
-
-            if (!result.Succeeded)
-                return false;
-
             var userTokenRow = await context.Set<UserTokenTableRow>()
                 .FirstOrDefaultAsync(row =>
                     row.UserId == user.Id &&
                     row.LoginProvider == loginProvider &&
-                    row.Name == tokenName);
+                    row.Name == tokenType);
 
             if (userTokenRow == null)
-                return false;
+            {
+                userTokenRow = new UserTokenTableRow
+                {
+                    UserId = user.Id,
+                    LoginProvider = loginProvider,
+                    Name = tokenType,
+                    Value = token,
+                    LifetimeExtended = lifetimeExtended
+                };
+                context.Set<UserTokenTableRow>().Add(userTokenRow);
+            } 
+            else
+            {
+                userTokenRow.Value = token;
+                userTokenRow.LifetimeExtended = lifetimeExtended;
+            }
 
-            userTokenRow.LifetimeExtended = lifetimeExtended;
             await context.SaveChangesAsync();
 
             return true;

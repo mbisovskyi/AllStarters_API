@@ -4,6 +4,6 @@ namespace AuthenticationAPI.Services
 {
     public interface IJwtTokenService
     {
-        Task<string> CreateTokenAsync(User user, bool lifetimeExtended);
+        Task<string> CreateTokenAsync(User user, bool lifetimeExtended, string tokenType);
     }
 }
